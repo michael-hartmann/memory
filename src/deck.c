@@ -69,9 +69,12 @@ deck_t *deck_new(const gchar *directory, const gchar *cover, gint pairs)
 
 void deck_free(deck_t *deck)
 {
-    for(gint i = 0; i < deck->elements; i++)
-        card_free(deck->cards[i]);
+    if(deck != NULL)
+    {
+        for(gint i = 0; i < deck->elements; i++)
+            card_free(deck->cards[i]);
 
-    g_free(deck->cards);
-    g_free(deck);
+        g_free(deck->cards);
+        g_free(deck);
+    }
 }

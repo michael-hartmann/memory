@@ -40,12 +40,15 @@ void card_set_solved(card_t *card)
 
 void card_free(card_t *card)
 {
-    if(card->filename_cover != NULL)
-        g_free(card->filename_cover);
-    if(card->filename_image != NULL)
-        g_free(card->filename_image);
+    if(card != NULL)
+    {
+        if(card->filename_cover != NULL)
+            g_free(card->filename_cover);
+        if(card->filename_image != NULL)
+            g_free(card->filename_image);
 
-    g_free(card);
+        g_free(card);
+    }
 }
 
 gchar *card_get_cover(card_t *card)
