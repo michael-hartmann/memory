@@ -1,6 +1,6 @@
 CC = gcc
 OPT = -O2
-CFLAGS = -std=c99 -Wall -Wextra -Wno-unused-parameter -g `pkg-config --cflags gtk+-3.0` -I include/
+CFLAGS = -std=c99 -Wall -Wextra -Wno-unused-parameter -g `pkg-config --cflags gtk+-3.0`
 LDFLAGS =  `pkg-config --libs gtk+-3.0` -lm
 SRC = deck.c settings.c card.c memory.c
 TARGET = memory
