@@ -13,7 +13,7 @@ GKeyFile *settings_init(void)
 
     if(!success)
     {
-        g_fprintf(stderr, "Error opening config file: %s (%d)\n", error->message, error->code);
+        g_fprintf(stderr, "Error opening config file %s: %s (%d)\n", CONFIG_FILE, error->message, error->code);
         g_key_file_unref(keyfile);
         return NULL;
     }

@@ -12,7 +12,6 @@
 state_t state;
 GKeyFile *keyfile;
 
-
 static void cb_new(GtkWidget *widget, gpointer data)
 {
     gint i = 0;
@@ -165,7 +164,10 @@ int main(int argc, char *argv[])
     g_free(path);
 
     keyfile = settings_init();
-    title   = g_key_file_get_string(keyfile, "Game", "title", NULL);
+    if(keyfile == NULL)
+        return 1;
+
+    title = g_key_file_get_string(keyfile, "Game", "title", NULL);
 
     /* create main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -215,8 +217,6 @@ int main(int argc, char *argv[])
     settings_deinit(keyfile);
 
     g_free(title);
-
-    g_printf("Bye\n");
 
     return 0;
 }
