@@ -183,13 +183,13 @@ int main(int argc, char *argv[])
     /* menu */
     menu = gtk_menu_new();
     
-    menu_new = gtk_image_menu_item_new_from_stock("gtk-new", NULL);
+    menu_new = gtk_menu_item_new_with_label("Neu");
     g_signal_connect(menu_new, "activate", G_CALLBACK(cb_new), NULL);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_new);
 
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
 
-    menu_quit = gtk_image_menu_item_new_from_stock("gtk-quit", NULL);
+    menu_quit = gtk_menu_item_new_with_label("Beenden");
     g_signal_connect(menu_quit, "activate", G_CALLBACK(cb_quit), NULL);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_quit);
 
