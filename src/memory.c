@@ -151,15 +151,11 @@ static void cb_quit(GtkWidget *widget, gpointer data)
 
 int main(int argc, char *argv[])
 {
-    GtkWidget *window, *menu, *vbox;
-    GtkWidget *menu_new, *menu_quit, *menubar, *menuitem;
-    gchar *path, *title;
-
     /* init gtk */
     gtk_init(&argc, &argv);
 
     /* change to directory */
-    path = g_path_get_dirname(argv[0]);
+    gchar *path = g_path_get_dirname(argv[0]);
     g_chdir(path);
     g_free(path);
 
@@ -167,10 +163,10 @@ int main(int argc, char *argv[])
     if(keyfile == NULL)
         return 1;
 
-    title = g_key_file_get_string(keyfile, "Game", "title", NULL);
+    gchar *title = g_key_file_get_string(keyfile, "Game", "title", NULL);
 
     /* create main window */
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), title);
 
     g_signal_connect(window, "delete-event", G_CALLBACK(delete_event), NULL);
@@ -178,23 +174,50 @@ int main(int argc, char *argv[])
 
     gtk_container_set_border_width(GTK_CONTAINER (window), 1);
 
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
     /* menu */
-    menu = gtk_menu_new();
+    GtkWidget *menu = gtk_menu_new();
     
-    menu_new = gtk_menu_item_new_with_label("Neu");
-    g_signal_connect(menu_new, "activate", G_CALLBACK(cb_new), NULL);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_new);
+    /* menu -> new */
+    {
+		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+		GtkWidget *icon = gtk_image_new_from_icon_name("document-new", GTK_ICON_SIZE_MENU);
+		GtkWidget *label = gtk_label_new("Neues Spiel");
+		GtkWidget *menu_new = gtk_menu_item_new();
 
+		gtk_container_add(GTK_CONTAINER(box), icon);
+		gtk_container_add(GTK_CONTAINER(box), label);
+
+		gtk_container_add(GTK_CONTAINER (menu_new), box);
+
+		gtk_widget_show_all(menu_new);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_new);
+        g_signal_connect(menu_new, "activate", G_CALLBACK(cb_new), NULL);
+    }
+
+    /* separator */
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
 
-    menu_quit = gtk_menu_item_new_with_label("Beenden");
-    g_signal_connect(menu_quit, "activate", G_CALLBACK(cb_quit), NULL);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_quit);
+    /* menu -> quit */
+    {
+		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+		GtkWidget *icon = gtk_image_new_from_icon_name("application-exit", GTK_ICON_SIZE_MENU);
+		GtkWidget *label = gtk_label_new("Beenden");
+		GtkWidget *menu_quit = gtk_menu_item_new();
 
-    menubar = gtk_menu_bar_new();
-    menuitem = gtk_menu_item_new_with_label("Spiel");
+		gtk_container_add(GTK_CONTAINER(box), icon);
+		gtk_container_add(GTK_CONTAINER(box), label);
+
+		gtk_container_add(GTK_CONTAINER (menu_quit), box);
+
+		gtk_widget_show_all(menu_quit);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_quit);
+        g_signal_connect(menu_quit, "activate", G_CALLBACK(cb_quit), NULL);
+    }
+
+    GtkWidget *menubar = gtk_menu_bar_new();
+    GtkWidget *menuitem = gtk_menu_item_new_with_label("Spiel");
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), menu);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuitem);
 
