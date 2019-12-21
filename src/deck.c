@@ -7,10 +7,7 @@
 /* see http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm */
 static void shuffle(void **list, size_t elements)
 {
-    GRand *rand = NULL;
-
-    if(rand == NULL)
-        rand = g_rand_new();
+    GRand *rand = g_rand_new();
 
     for(gint i = elements-1; i >= 1; i--)
     {
@@ -21,6 +18,8 @@ static void shuffle(void **list, size_t elements)
         list[j] = list[i];
         list[i] = temp;
     }
+
+    g_rand_free(rand);
 }
 
 deck_t *deck_new(const gchar *directory, const gchar *cover, gint pairs)
