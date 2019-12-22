@@ -14,23 +14,14 @@ GKeyFile *keyfile;
 
 static void cb_new(GtkWidget *widget, gpointer data)
 {
-    gint i = 0;
-    gint pairs     = g_key_file_get_integer(keyfile, "Game", "pairs", NULL);
-    gchar *set     = g_key_file_get_string (keyfile, "Game", "set",   NULL);
-    gchar *cover   = g_key_file_get_string (keyfile, "Game", "cover", NULL);
-    gchar *ratio_s = g_key_file_get_string (keyfile, "Game", "ratio", NULL);
-    gchar **list   = g_strsplit(ratio_s, ":", 2);
-    gint64 xratio  = g_ascii_strtoll(list[0], NULL, 10);
-    gint64 yratio  = g_ascii_strtoll(list[1], NULL, 10);
-    gdouble ratio  = (gdouble)xratio/yratio;
+    gint pairs   = g_key_file_get_integer(keyfile, "Game", "pairs", NULL);
+    gchar *set   = g_key_file_get_string (keyfile, "Game", "set",   NULL);
+    gchar *cover = g_key_file_get_string (keyfile, "Game", "cover", NULL);
 
-    gint rows = ceil(sqrt(   ratio * 2*pairs));
-    gint cols = ceil(sqrt(1./ratio * 2*pairs));
+    g_printf("pairs=%d\n", pairs);
 
-    g_printf("rows=%d, cols=%d, pairs=%d\n", rows, cols, pairs);
-
-    if(state.grid != NULL)
-        gtk_widget_destroy(state.grid);
+    if(state.vbox != NULL)
+        gtk_container_remove(GTK_CONTAINER(state.scrolled_window), state.vbox);
     if(state.deck != NULL)
         deck_free(state.deck);
     if(state.start != NULL)
@@ -43,28 +34,29 @@ static void cb_new(GtkWidget *widget, gpointer data)
     state.deck  = deck_new(set, cover, pairs);
     state.unsolved = pairs;
 
-    state.grid = gtk_grid_new();
-    for(gint y = 0; y < cols; y++)
-        for(gint x = 0; x < rows; x++)
-        {
-            if(i >= 2*pairs)
-                break;
+    GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-            GtkWidget *button;
-            card_t *card = state.deck->cards[i++];
-            button = card_get_button(card);
+    GtkWidget* flowbox = gtk_flow_box_new();
+    for(gint i = 0; i < 2*pairs; i++)
+    {
+        card_t *card = state.deck->cards[i];
+        GtkWidget *button = card_get_button(card);
 
-            g_signal_connect(button, "clicked", G_CALLBACK(cb_clicked), card);
-            gtk_grid_attach(GTK_GRID(state.grid), button, x, y, 1, 1);
-        }
+        g_signal_connect(button, "clicked", G_CALLBACK(cb_clicked), card);
+        gtk_flow_box_insert(GTK_FLOW_BOX(flowbox), button, i);
+    }
+    gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(flowbox), 5);
+    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(flowbox), 24);
 
-    gtk_box_pack_start(GTK_BOX(state.vbox), state.grid, FALSE, FALSE, 5);
-    gtk_widget_show_all(state.grid);
+    gtk_box_pack_start(GTK_BOX(vbox), flowbox, FALSE, FALSE, 5);
+    gtk_widget_show_all(vbox);
+
+    gtk_container_add(GTK_CONTAINER(state.scrolled_window),vbox);
+
+    state.vbox = vbox;
 
     g_free(set);
     g_free(cover);
-    g_free(ratio_s);
-    g_strfreev(list);
 }
 
 
@@ -168,6 +160,7 @@ int main(int argc, char *argv[])
     /* create main window */
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(window), title);
+    gtk_widget_set_size_request(window, 800, 600);
 
     g_signal_connect(window, "delete-event", G_CALLBACK(delete_event), NULL);
     g_signal_connect(window, "destroy", G_CALLBACK(cb_quit), NULL);
@@ -221,11 +214,15 @@ int main(int argc, char *argv[])
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), menu);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), menuitem);
 
+    GtkWidget* scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+
     gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 5);
 
     /* initialize state */
-    state.grid = NULL;
-    state.vbox = vbox;
+    //state.grid = vbox2;
+    state.vbox = NULL;
+    state.scrolled_window = scrolled_window;
     state.deck = NULL;
     state.start = NULL;
 

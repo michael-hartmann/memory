@@ -1,12 +1,15 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <gtk/gtk.h>
+#include "card.h"
+
     typedef struct {
         int clicks;
         int unsolved;
         int cards_open;
         card_t *cards_shown[2];
-        GtkWidget *vbox, *grid;
+        GtkWidget *vbox, *scrolled_window;
         deck_t *deck;
         GDateTime *start;
     } state_t;
