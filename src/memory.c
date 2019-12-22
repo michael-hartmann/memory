@@ -18,6 +18,7 @@ static void cb_new(GtkWidget *widget, gpointer data)
     gchar *set   = g_key_file_get_string (keyfile, "Game", "set",   NULL);
     gchar *cover = g_key_file_get_string (keyfile, "Game", "cover", NULL);
 
+
     g_printf("pairs=%d\n", pairs);
 
     if(state.vbox != NULL)
@@ -32,6 +33,7 @@ static void cb_new(GtkWidget *widget, gpointer data)
     state.cards_shown[0] = state.cards_shown[1] = NULL;
     state.start = g_date_time_new_now_local();
     state.deck  = deck_new(set, cover, pairs);
+    state.pairs = pairs;
     state.unsolved = pairs;
 
     GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -123,11 +125,25 @@ static void cb_clicked(GtkWidget *widget, gpointer data)
     if(state.unsolved == 0)
     {
         GDateTime *now = g_date_time_new_now_local();
-        GTimeSpan diff = g_date_time_difference(now, state.start);
+        GTimeSpan timespan = g_date_time_difference(now, state.start);
         g_date_time_unref(state.start);
         g_date_time_unref(now);
         state.start = NULL;
-        g_printf("fertig, clicks %d, deltat: %.1lf\n", state.clicks, diff/1e6);
+
+        int minutes = timespan/60e6;
+        int seconds = (int)(timespan/1e6) % 60;
+
+		GtkWidget *dialog = gtk_message_dialog_new(
+            GTK_WINDOW(state.window),
+            GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_INFO,
+            GTK_BUTTONS_YES_NO,
+            "Geschafft!\n\nDu hast %d:%02d Zeit und %d Versuche gebraucht um alle %d Paare zu finden.\n\nNeues Spiel beginnen?", minutes, seconds, state.clicks/2, state.pairs);
+		gint answer = gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+
+        if(answer == GTK_RESPONSE_YES)
+            cb_new(NULL, NULL);
     }
 }
 
@@ -222,6 +238,7 @@ int main(int argc, char *argv[])
     /* initialize state */
     //state.grid = vbox2;
     state.vbox = NULL;
+    state.window = window;
     state.scrolled_window = scrolled_window;
     state.deck = NULL;
     state.start = NULL;

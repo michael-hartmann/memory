@@ -8,8 +8,9 @@
         int clicks;
         int unsolved;
         int cards_open;
+        int pairs;
         card_t *cards_shown[2];
-        GtkWidget *vbox, *scrolled_window;
+        GtkWidget *window, *vbox, *scrolled_window;
         deck_t *deck;
         GDateTime *start;
     } state_t;
