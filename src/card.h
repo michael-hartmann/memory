@@ -6,12 +6,13 @@
     #define CARD_SOLVED 3
 
     typedef struct {
+        void *deck;
         gchar *filename_image, *filename_cover;
         gint state;
         GtkWidget *button;
     } card_t;
 
-    card_t *card_new(const gchar *filename_image, const gchar *filename_cover);
+    card_t *card_new(void* game, const gchar *filename_image, const gchar *filename_cover);
     void card_free(card_t *card);
     GtkWidget *card_get_button(card_t *card);
 

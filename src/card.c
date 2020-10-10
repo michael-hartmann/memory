@@ -3,10 +3,11 @@
 
 #include "card.h"
 
-card_t *card_new(const gchar *filename_image, const gchar *filename_cover)
+card_t *card_new(void *deck, const gchar *filename_image, const gchar *filename_cover)
 {
     card_t *card = g_malloc(sizeof(card_t));
 
+    card->deck = deck;
     card->filename_image = NULL;
     card->filename_cover = NULL;
 
