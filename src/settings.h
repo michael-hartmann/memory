@@ -1,11 +1,10 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#define CONFIG_FILE "settings.cfg"
+#include <gtk/gtk.h>
 
-#define SETTINGS_DEFAULT_GAME_PAIRS 16
+#include "memory.h"
 
-GKeyFile *settings_init(void);
-gboolean settings_deinit(GKeyFile *keyfile);
+void settings_dialog(memory_t *memory);
 
 #endif
