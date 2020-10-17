@@ -7,6 +7,8 @@
 #include "settings.h"
 
 #define CONFIG_FILE "settings.cfg"
+#define SETS_FILE "sets.cfg"
+#define COVERS_FILE "covers.cfg"
 
 static void cb_clicked(GtkWidget *widget, gpointer data);
 static void cb_new(GtkWidget *widget, gpointer data);
@@ -14,19 +16,63 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data);
 static void cb_quit(GtkWidget *widget, gpointer data);
 static gboolean timer(gpointer data);
 
+static path_title_t *path_entry_create(const gchar *filename)
+{
+    GKeyFile *setfile = g_key_file_new();
+    if(!g_key_file_load_from_file(setfile, filename, 0, NULL))
+    {
+        g_key_file_unref(setfile);
+        return NULL;
+    }
+
+    gsize length = 0;
+    gchar **groups = g_key_file_get_groups(setfile, &length);
+
+    path_title_t* list = g_malloc0((length+1)*sizeof(path_title_t));
+    for(gsize i = 0; i < length; i++)
+    {
+        gchar* path = g_key_file_get_string(setfile, groups[i], "path", NULL);
+        if(!g_file_test (path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))
+        {
+            g_free(path);
+            continue;
+        }
+        gchar* title = g_key_file_get_string(setfile, groups[i], "title", NULL);
+        list[i].title = title;
+        list[i].path = path;
+    }
+    g_strfreev(groups);
+    g_key_file_unref(setfile);
+
+    return list;
+}
+
+static void path_entry_destroy(path_title_t* list)
+{
+    if(list == NULL)
+        return;
+
+    for(gsize i = 0; list[i].title != NULL; i++)
+    {
+        g_free(list[i].title);
+        g_free(list[i].path);
+    }
+    g_free(list);
+}
+
 static void cb_new(GtkWidget *widget, gpointer data)
 {
     memory_t *memory = data;
 
-    gint pairs   = g_key_file_get_integer(memory->keyfile, "Game", "pairs", NULL);
-    gchar *set   = g_key_file_get_string (memory->keyfile, "Game", "set",   NULL);
-    gchar *cover = g_key_file_get_string (memory->keyfile, "Game", "cover", NULL);
+    gint pairs        = g_key_file_get_integer(memory->keyfile, "Game", "pairs", NULL);
+    gint active_set   = g_key_file_get_integer(memory->keyfile, "Game", "active_set", NULL);
+    gint active_cover = g_key_file_get_integer(memory->keyfile, "Game", "active_cover", NULL);
 
     if(memory->vbox != NULL)
         gtk_container_remove(GTK_CONTAINER(memory->scrolled_window), memory->vbox);
 
     deck_free(memory->deck);
-    memory->deck = deck_new(memory, set, cover, pairs);
+    memory->deck = deck_new(memory, memory->list_sets[active_set].path, memory->list_covers[active_cover].path, pairs);
 
     GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
@@ -50,9 +96,6 @@ static void cb_new(GtkWidget *widget, gpointer data)
     memory->vbox = vbox;
 
     g_timeout_add(0, timer, memory);
-
-    g_free(set);
-    g_free(cover);
 }
 
 static void cb_settings(GtkWidget *widget, gpointer data)
@@ -106,12 +149,12 @@ static gboolean timer(gpointer data)
     {
         GTimeSpan elapsed = deck_get_elapsed_time(memory->deck);
         gint seconds = elapsed/1000000;
-        glong diff = (seconds+1)*1000-elapsed/1000;
 
-        gchar *text = g_strdup_printf("%d:%02d", seconds/60, seconds%60);
+        gchar *text = g_strdup_printf("Zeit %d:%02d", seconds/60, seconds%60);
         gtk_label_set_text((GtkLabel *)memory->status, text);
         g_free(text);
         
+        glong diff = (seconds+1)*1000-elapsed/1000;
         g_timeout_add(diff, timer, memory);
     }
     return FALSE;
@@ -123,10 +166,10 @@ memory_t *memory_create()
 
     memory->keyfile = g_key_file_new();
     if(!g_key_file_load_from_file(memory->keyfile, CONFIG_FILE, G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
-    {
-        memory_destroy(memory);
-        return NULL;
-    }
+        goto fail;
+
+    memory->list_sets = path_entry_create(SETS_FILE);
+    memory->list_covers = path_entry_create(COVERS_FILE);
 
     /* create main window */
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -169,9 +212,11 @@ memory_t *memory_create()
     /* menu -> settings */
     {
         GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *icon = gtk_image_new_from_icon_name("document-properties", GTK_ICON_SIZE_MENU);
         GtkWidget *label = gtk_label_new("Einstellungen");
         GtkWidget *menu_settings = gtk_menu_item_new();
 
+        gtk_container_add(GTK_CONTAINER(box), icon);
         gtk_container_add(GTK_CONTAINER(box), label);
         gtk_container_add(GTK_CONTAINER(menu_settings), box);
 
@@ -228,6 +273,10 @@ memory_t *memory_create()
     gtk_widget_show_all(window);
 
     return memory;
+
+fail:
+        memory_destroy(memory);
+        return NULL;
 }
 
 void memory_destroy(memory_t *memory)
@@ -239,6 +288,10 @@ void memory_destroy(memory_t *memory)
             g_key_file_save_to_file(memory->keyfile, CONFIG_FILE, NULL);
             g_key_file_unref(memory->keyfile);
         }
+
+        path_entry_destroy(memory->list_sets);
+        path_entry_destroy(memory->list_covers);
+
         g_free(memory);
     }
 }
@@ -254,6 +307,8 @@ int main(int argc, char *argv[])
     g_free(path);
 
     memory_t *memory = memory_create();
+    if(!memory)
+        return 1;
 
     gtk_main();
 

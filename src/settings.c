@@ -1,7 +1,5 @@
 #include "settings.h"
 
-#include <glib/gprintf.h>
-
 static void cb_sounds(GtkWidget *widget, gboolean state, gpointer data)
 {
     memory_t *memory = data;
@@ -13,6 +11,24 @@ static void cb_pairs(GtkSpinButton *spin_button, gpointer data)
     memory_t *memory = data;
     gint pairs = gtk_spin_button_get_value_as_int(spin_button);
     g_key_file_set_integer(memory->keyfile, "Game", "pairs", pairs);
+}
+
+static void cb_combo_box_set(GtkComboBox *widget, gpointer data)
+{
+    memory_t *memory = data;
+    GtkComboBox *combo_box = widget;
+
+    gint value = gtk_combo_box_get_active(combo_box);
+    g_key_file_set_integer (memory->keyfile, "Game", "active_set", value);
+}
+
+static void cb_combo_box_cover(GtkComboBox *widget, gpointer data)
+{
+    memory_t *memory = data;
+    GtkComboBox *combo_box = widget;
+
+    gint value = gtk_combo_box_get_active(combo_box);
+    g_key_file_set_integer (memory->keyfile, "Game", "active_cover", value);
 }
 
 // Function to open a dialog box with a message
@@ -63,11 +79,23 @@ void settings_dialog(memory_t *memory)
 
     GtkWidget *label_set = gtk_label_new("Kartendeck");
     gtk_widget_set_halign(label_set, GTK_ALIGN_END);
+    GtkWidget *combo_box_set = gtk_combo_box_text_new();
+    for(gsize i = 0; memory->list_sets[i].title != NULL; i++)
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_box_set), memory->list_sets[i].title);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box_set), g_key_file_get_integer(memory->keyfile, "Game", "active_set", NULL));
+    g_signal_connect(combo_box_set, "changed", G_CALLBACK(cb_combo_box_set), memory);
     gtk_grid_attach(GTK_GRID(grid), label_set, 0, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), combo_box_set, 1, 2, 1, 1);
 
     GtkWidget *label_cover = gtk_label_new("Deckblatt");
     gtk_widget_set_halign(label_cover, GTK_ALIGN_END);
+    GtkWidget *combo_box_cover = gtk_combo_box_text_new();
+    for(gsize i = 0; memory->list_covers[i].title != NULL; i++)
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_box_cover), memory->list_covers[i].title);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box_cover), g_key_file_get_integer(memory->keyfile, "Game", "active_cover", NULL));
+    g_signal_connect(combo_box_cover, "changed", G_CALLBACK(cb_combo_box_cover), memory);
     gtk_grid_attach(GTK_GRID(grid), label_cover, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), combo_box_cover, 1, 3, 1, 1);
 
     gtk_container_add(GTK_CONTAINER(content_area), grid);
 
